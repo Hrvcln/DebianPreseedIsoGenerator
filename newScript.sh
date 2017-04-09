@@ -24,9 +24,10 @@ usage() {
 }
 
 clean_exit() {
+    exec 2>/dev/null
 	local return_code=$1
-	fusermount -u /tmp/isofiles
-	rm -rf /tmp/isofiles
+    sudo -u /tmp/loopdir
+	rm -rf /tmp/{isofiles,workspace,loopdir}
 	exit $return_code
 }
 
@@ -57,13 +58,13 @@ cmdline() {
 	do
 		case $OPTION in
 			i)
-				readonly INPUT=$OPTARG
+                readonly INPUT=$(realpath $OPTARG)
 				;;
 			o)
-				readonly OUTPUT=$OPTARG
+                readonly OUTPUT=$(realpath $OPTARG)
 				;;
 			p)
-				readonly PRESEED=$OPTARG
+                readonly PRESEED=$(realpath $OPTARG)
 				;;
 			a)
 				readonly AUTOSTART=true
@@ -103,8 +104,20 @@ is_preseed_valid() {
 }
 
 task() {
-	mkdir /tmp/isofiles
-	fuseiso $INPUT /tmp/isofiles
+	mkdir /tmp/{loopdir,isofiles,workspace}
+    sudo mount -o loop $INPUT /tmp/loopdir
+    rsync -a -H --exclude=TRANS.TBL /tmp/loopdir/ /tmp/isofiles
+    sleep 1
+    sudo umount /tmp/loopdir
+    chmod -R u+w /tmp/isofiles
+    cd /tmp/workspace
+    gzip -d < /tmp/isofiles/install.amd/initrd.gz | cpio --extract --verbose --make-directories --no-absolute-filenames
+    cp ${PRESEED} ./preseed.cfg
+    find . | cpio -H newc --create --verbose | gzip -9 | tee ../isofiles/install.amd/initrd.gz > /dev/null
+    cd ../isofiles
+    chmod u+w md5sum.txt
+    md5sum `find -follow -type f` > md5sum.txt
+    sudo genisoimage -o ${OUTPUT} -r -J -no-emul-boot -boot-load-size 4 -boot-info-table -b isolinux/isolinux.bin -c isolinux/boot.cat .
 }
 
 main() {
