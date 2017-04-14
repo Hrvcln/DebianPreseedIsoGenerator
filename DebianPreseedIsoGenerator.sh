@@ -13,8 +13,8 @@ usage() {
 	Options:
 	-i --input              Fichier ISO à modifier.
 	-o --output             Fichier ISO de sortie.
-	-p --preseed-file       Fichier preseed à insérer dans l'iso défini en '--input'.
-	-a --autostart          Définir si l'installation preseed doit se lancer automatiquement au chargement de l'ISO
+	-p --preseed-file       Fichier preseed à insérer dans l\'iso défini en --input.
+	-a --autostart          Définir si l\'installation preseed doit se lancer automatiquement au chargement de l\'ISO
 	-h --help               Afficher cette aide
 
 	Examples:
@@ -87,7 +87,7 @@ is_file() {
 
 
 is_input_valid() {
-	is_file $INPUT || { echo "--input parameter is not a valid file, abort"; clean_exit 1; }	
+	is_file $INPUT || { echo "--input parameter is not a valid file, abort"; clean_exit 1; }
 }
 
 is_output_valid() {
